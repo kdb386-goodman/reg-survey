@@ -7,3 +7,6 @@
 .env
 *token*.json
 credentials.json
+
+# 운영 스크립트는 웹에 올리지 않는다
+go_public.ps1
