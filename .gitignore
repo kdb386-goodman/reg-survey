@@ -1,0 +1,9 @@
+# 이 저장소에는 랜딩 페이지 두 개와 설명서만 둔다.
+# 조사 대장·연락처·회신·인증정보는 어떤 경우에도 올리지 않는다.
+*.csv
+*.xlsx
+*.docx
+*.hwpx
+.env
+*token*.json
+credentials.json
