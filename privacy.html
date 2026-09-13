@@ -111,9 +111,16 @@
 
 <footer>
   <div>시행일 2026년 9월 12일 (사례품 발송 목적 추가)</div>
-  <div><a href="index.html">← 조사 안내로 돌아가기</a></div>
+  <div><a id="back" href="index.html">← 조사 안내로 돌아가기</a></div>
 </footer>
 
 </div>
+<script>
+/* 안내 링크의 ?src= 코드를 돌아가는 링크에도 이어 붙인다(없으면 index.html이 저장값을 쓴다) */
+(function () {
+  var src = new URLSearchParams(location.search).get("src") || "";
+  if (src) document.getElementById("back").href = "index.html?src=" + encodeURIComponent(src);
+})();
+</script>
 </body>
 </html>

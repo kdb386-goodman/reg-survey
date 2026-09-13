@@ -45,6 +45,11 @@
          font-size:13px;color:var(--sub)}
   a{color:var(--brand)}
   code{background:var(--brand-soft);padding:1px 6px;border-radius:5px;font-size:13px}
+  .pick{margin:26px 0 -12px;text-align:center}
+  .pick label{display:block;font-size:14px;color:var(--sub);margin-bottom:6px}
+  .pick select{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;width:100%;
+               max-width:420px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  [hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -95,6 +100,10 @@
     </p>
   </div>
 
+  <div class="pick" id="pickbox" hidden>
+    <label for="srcpick">안내받으신 곳을 골라 주십시오</label>
+    <select id="srcpick"><option value="">선택해 주십시오</option></select>
+  </div>
   <a class="cta" id="start" href="#" rel="noopener">설문 참여하기</a>
   <p class="note" id="srcnote"></p>
 
@@ -131,11 +140,48 @@
    ─────────────────────────────────────────────────────────────── */
 var FORM_URL  = "https://docs.google.com/forms/d/e/1FAIpQLScQ6IliwpvM32RtRb9gj18cLwX-QjAck0lQvF7_OiJe-_Fw7Q/viewform";
 var ENTRY_SRC = "entry.768411431";
+var ENTRY_CHANNEL = "entry.600828117";   // '어디에서 안내받으셨습니까 [MEM-CHANNEL]' 문항 사전 채움 파라미터
+
+/* 유입 코드 → 폼 선택지 문구. 실증및설문실행/code/src_codes.py · create_form.channel_options()와 같게 둔다. */
+var CHANNELS = [
+  ["koraia", "한국인공지능협회(KORAIA)"], ["kosa", "한국인공지능·소프트웨어산업협회"],
+  ["kstartup", "코리아스타트업포럼"], ["kinternet", "한국인터넷기업협회"],
+  ["kova", "벤처기업협회"], ["kbiz", "중소기업중앙회"], ["korfin", "한국핀테크산업협회"],
+  ["kodhia", "한국디지털헬스산업협회"], ["kmdia", "한국의료기기산업협회"],
+  ["kaami", "한국자율주행산업협회"], ["koila", "한국통합물류협회"],
+  ["korearobot", "한국AI·로봇산업협회"], ["opa", "개인정보보호협회(OPA)"],
+  ["kisia", "한국정보보호산업협회(KISIA)"], ["kdsia", "한국재난안전산업협회"],
+  ["safety", "대한산업안전협회"], ["kelia", "한국에듀테크산업협회"],
+  ["direct", "한국중소기업학회에서 받은 안내 메일"], ["etc", "기타(지인 소개·검색 등)"]
+];
+var STORE_KEY = "regsurvey_src";
 
 (function () {
   var btn = document.getElementById("start");
   var note = document.getElementById("srcnote");
-  var src = new URLSearchParams(location.search).get("src") || "";
+  var box = document.getElementById("pickbox");
+  var pick = document.getElementById("srcpick");
+  var names = {};
+  CHANNELS.forEach(function (c) { names[c[0]] = c[1]; });
+
+  /* 게시판 자동 링크로 뒤에 글자가 붙는 등 오염된 코드를 알려진 코드로 되돌린다.
+     'koraia에서' → 'koraia'. 긴 코드부터 앞부분을 맞춰 본다. */
+  function clean(v) {
+    v = (v || "").toLowerCase().replace(/^\s+|\s+$/g, "");
+    if (!v) return "";
+    if (names[v]) return v;
+    var keys = Object.keys(names).sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < keys.length; i++) {
+      if (v.indexOf(keys[i]) === 0) return keys[i];
+    }
+    return "";
+  }
+  function load() { try { return localStorage.getItem(STORE_KEY) || ""; } catch (e) { return ""; } }
+  function save(v) { try { if (v) localStorage.setItem(STORE_KEY, v); } catch (e) {} }
+
+  var fromUrl = clean(new URLSearchParams(location.search).get("src"));
+  var src = fromUrl || clean(load());
+  save(src);
 
   if (!FORM_URL) {
     btn.setAttribute("aria-disabled", "true");
@@ -144,15 +190,37 @@ var ENTRY_SRC = "entry.768411431";
     note.textContent = "폼 주소가 아직 설정되지 않았습니다(index.html의 FORM_URL).";
     return;
   }
-  var url = FORM_URL;
-  if (src && ENTRY_SRC) {
-    url += (url.indexOf("?") === -1 ? "?" : "&") +
-           encodeURIComponent(ENTRY_SRC) + "=" + encodeURIComponent(src);
+
+  function render() {
+    var url = FORM_URL, q = [];
+    if (src && ENTRY_SRC) q.push(encodeURIComponent(ENTRY_SRC) + "=" + encodeURIComponent(src));
+    if (src && ENTRY_CHANNEL) q.push(encodeURIComponent(ENTRY_CHANNEL) + "=" + encodeURIComponent(names[src]));
+    if (q.length) url += (url.indexOf("?") === -1 ? "?" : "&") + q.join("&");
+    btn.href = url;
+    /* 개인정보 처리방침을 오가도 코드가 이어지게 한다 */
+    var pv = document.querySelector('a[href^="privacy.html"]');
+    if (pv) pv.href = "privacy.html" + (src ? "?src=" + encodeURIComponent(src) : "");
+    note.textContent = src
+      ? "안내받으신 경로가 자동으로 기록됩니다 (" + names[src] + ")"
+      : "안내받으신 곳을 고르지 않으셔도 설문에서 다시 여쭙습니다";
   }
-  btn.href = url;
-  note.textContent = src
-    ? "안내받으신 경로가 자동으로 기록됩니다 (" + src + ")"
-    : "버튼이 눌리지 않으면 아래 주소를 복사해 여십시오 · " + FORM_URL;
+
+  /* 코드 없이 들어온 경우에만 고르는 칸을 보여 준다 */
+  if (!fromUrl) {
+    CHANNELS.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c[0]; o.textContent = c[1];
+      pick.appendChild(o);
+    });
+    if (src) pick.value = src;
+    box.hidden = false;
+    pick.addEventListener("change", function () {
+      src = pick.value;
+      save(src);
+      render();
+    });
+  }
+  render();
 })();
 </script>
 </body>
