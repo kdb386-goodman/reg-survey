@@ -2,32 +2,58 @@
 
 협회가 회원사에 배포할 링크의 도착 지점이다.
 
-## 현재 상태 (2026-09-12)
+## 현재 상태 (2026-09-13)
 
 | | |
 |---|---|
-| 저장소 | `kdb386-goodman/reg-survey` — **비공개** |
-| GitHub Pages | **꺼짐** |
-| 공개 예정 주소 | `https://kdb386-goodman.github.io/reg-survey/` |
+| 저장소 | `kdb386-goodman/reg-survey` — **공개** |
+| GitHub Pages | **켜짐** (main 브랜치 루트) |
+| 공개 주소 | `https://kdb386-goodman.github.io/reg-survey/` |
 | Google Form | 완성, 연결됨 |
 | 응답 스프레드시트 | 연결됨 |
+| 실제 메일 발송 | 잠김 — `.env`의 `SEND_ENABLED=false` |
 
-공정거래위원회 협조문 확정본을 받기 전까지 비공개로 둔다. 확정되면
-`go_public.ps1` 한 번으로 공개 전환 + Pages 활성화 + `.env` 기록까지 끝난다.
+공개 전환·Pages 활성화·`.env` 기록은 `go_public.ps1`로 마쳤다. 페이지가 열려 있어도
+실제 안내 메일 발송은 공정거래위원회 협조문 확정본을 받은 뒤 `SEND_ENABLED`를
+`true`로 바꿔야 열린다.
+
+`go_public.ps1`은 저장소에 올리지 않는다(.gitignore). 저장소에는
+`index.html` · `privacy.html` · `README.md` · `.gitignore` 넷만 둔다.
+
+## 수정·재배포
+
+두 페이지를 고친 뒤 main에 push하면 1분 안팎으로 공개 주소에 반영된다.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File go_public.ps1 -WhatIf   # 확인만
-powershell -ExecutionPolicy Bypass -File go_public.ps1           # 실행
+git add index.html privacy.html
+git commit -m "변경 내용"
+git push origin main
 ```
 
-`go_public.ps1`은 저장소에 올리지 않는다(.gitignore). 공개 직전에 올라간 파일이
-`index.html` · `privacy.html` · `README.md` · `.gitignore` 넷뿐인지 스스로 검사한다.
+되돌리려면(비공개 전환·Pages 끄기)
+
+```powershell
+gh repo edit kdb386-goodman/reg-survey --visibility private --accept-visibility-change-consequences
+gh api -X DELETE repos/kdb386-goodman/reg-survey/pages
+```
+
+## 표기 기준
+
+| | |
+|---|---|
+| 수행기관 | 한국중소기업학회 (팀명 붙이지 않음) |
+| 발주 | 공정거래위원회 |
+| 연구책임자 | 양 동 우 교수 (호서대학교 벤처대학원) |
+| 문의 | 오성엽 · 010-4166-9971 · kdb386@gmail.com |
+
+메일 안내문과 회원사 배포안내문도 같은 값을 쓴다(`../code/.env`의
+`FROM_NAME`·`CONTACT_*`).
 
 ## 연결된 값
 
 ```js
 var FORM_URL  = "https://docs.google.com/forms/d/e/1FAIpQLScQ6IliwpvM32RtRb9gj18cLwX-QjAck0lQvF7_OiJe-_Fw7Q/viewform";
-var ENTRY_SRC = "entry.1815859227";   // MEM-SRC 문항
+var ENTRY_SRC = "entry.768411431";    // MEM-SRC 문항
 ```
 
 `?src=koraia` 로 들어오면 폼의 `이 설문을 안내받은 경로 [MEM-SRC]` 칸에 `koraia`가
@@ -73,7 +99,7 @@ https://kdb386-goodman.github.io/reg-survey/?src=koraia
 ```
 LANDING_URL=https://kdb386-goodman.github.io/reg-survey/
 ```
-`go_public.ps1`이 자동으로 넣는다. 비어 있는 동안에는 회원사 안내문
+`go_public.ps1`이 넣어 두었다(기록됨). 이 값이 비어 있으면 회원사 안내문
 발송이 차단된다(본문이 완성되지 않으므로).
 
 ## 미리 보기
